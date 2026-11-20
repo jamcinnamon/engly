@@ -1,0 +1,7 @@
+server.log
+cards.json
+cards.json.tmp
+config.local.js
+icon.png
+.DS_Store
+__pycache__/

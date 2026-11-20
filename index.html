@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>원리 영어 노트</title>
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one narrow column, sticky three-step bar on top (1 왜 → 2 어떻게 → 3 복습), cards as the shared unit across all three. */
+:root {
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --ink: #16211f;
+  --muted: #5b6966;
+  --line: #d5dedb;
+  --accent: #0e6a5b;
+  --accent-soft: #dcebe7;
+  --again: #a94f1a;
+  --again-soft: #f6e6da;
+  --on-accent: #ffffff;
+  --font-display: "Gowun Batang", "Noto Serif KR", Georgia, serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101615;
+    --surface: #19211f;
+    --ink: #e5ecea;
+    --muted: #93a29f;
+    --line: #2b3835;
+    --accent: #5fc4b0;
+    --accent-soft: #1d3833;
+    --again: #e59b68;
+    --again-soft: #3a2a1e;
+    --on-accent: #0c1513;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101615;
+  --surface: #19211f;
+  --ink: #e5ecea;
+  --muted: #93a29f;
+  --line: #2b3835;
+  --accent: #5fc4b0;
+  --accent-soft: #1d3833;
+  --again: #e59b68;
+  --again-soft: #3a2a1e;
+  --on-accent: #0c1513;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+header.top {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 10px; flex-wrap: wrap; }
+.brand h1 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0; }
+.brand p { margin: 0; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-bottom: 10px; }
+.tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink);
+  text-decoration: none; min-width: 0;
+}
+.tab .n {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 0.75rem; font-weight: 600;
+  background: var(--accent-soft); color: var(--accent);
+}
+.tab .t { font-weight: 600; white-space: nowrap; }
+.tab .d { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.tab[aria-current="page"] .n { background: var(--on-accent); color: var(--accent); }
+.tab[aria-current="page"] .d { color: var(--on-accent); opacity: 0.85; }
+.tab .due {
+  margin-left: auto; flex: none;
+  min-width: 20px; padding: 0 6px; border-radius: 10px;
+  background: var(--again); color: #fff;
+  font-size: 0.75rem; font-weight: 600; text-align: center; line-height: 20px;
+}
+.tab .d { display: none; } /* 탭 이름만 보이게. 설명은 각 탭 위 안내 문장에 있음 */
+
+main { padding: 18px 0 64px; }
+.view { display: none; }
+.view.on { display: block; }
+.lead { margin: 0 0 14px; color: var(--muted); font-size: 0.9375rem; }
+.lead strong { color: var(--ink); font-weight: 600; }
+
+.thread { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.msg { border-radius: var(--radius); padding: 12px 14px; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; max-width: 88%; background: var(--accent-soft); color: var(--ink); }
+.msg.bot { background: var(--surface); border: 1px solid var(--line); }
+.msg.bot h3 { font-family: var(--font-display); font-size: 1.0625rem; margin: 16px 0 6px; text-wrap: balance; }
+.msg.bot h3:first-child { margin-top: 0; }
+.msg.bot p { margin: 0 0 10px; }
+.msg.bot p:last-child, .msg.bot ul:last-child { margin-bottom: 0; }
+.msg.bot ul { margin: 0 0 10px; padding-left: 20px; }
+.msg.bot li { margin-bottom: 4px; }
+.msg.bot code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+.msg.err { background: var(--again-soft); color: var(--ink); border: 1px solid var(--again); font-size: 0.9375rem; }
+.tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 7px; border-radius: 10px; line-height: 20px; vertical-align: 1px; }
+.tag.sure { background: var(--accent-soft); color: var(--accent); }
+.tag.maybe { background: var(--again-soft); color: var(--again); }
+.thinking { color: var(--muted); font-size: 0.9375rem; }
+
+.compose { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.compose:focus-within { border-color: var(--accent); }
+textarea, input[type="text"] {
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink);
+  background: transparent; border: 0; outline: 0; resize: vertical; padding: 4px;
+}
+.field textarea, .field input[type="text"] { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.field textarea:focus, .field input[type="text"]:focus { border-color: var(--accent); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row.end { justify-content: flex-end; }
+.row.between { justify-content: space-between; }
+button {
+  font: inherit; font-size: 0.9375rem; font-weight: 500;
+  border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+button.again { border-color: var(--again); color: var(--again); }
+button.ghost { border-color: transparent; background: transparent; color: var(--muted); padding: 8px 8px; }
+button:disabled { opacity: 0.5; cursor: default; }
+button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chips span { font-size: 0.8125rem; color: var(--muted); align-self: center; }
+.chip { font-size: 0.8125rem; padding: 5px 10px; border-radius: 16px; background: transparent; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.panel h2 { font-family: var(--font-display); font-size: 1.0625rem; margin: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 0.8125rem; color: var(--muted); font-weight: 500; }
+.note { font-size: 0.8125rem; color: var(--muted); margin: 0; }
+.next { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+.rcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px; }
+.rcard .count { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rcard .expr { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.rcard dl { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.rcard dt { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.rcard dd { margin: 0; }
+.verdict { border-left: 3px solid var(--accent); padding: 6px 0 6px 12px; }
+.verdict.off { border-left-color: var(--again); }
+.verdict b { display: block; font-size: 0.875rem; }
+.empty { text-align: left; }
+.empty h2 { font-family: var(--font-display); font-size: 1.125rem; margin: 0 0 4px; }
+
+.list-head { display: flex; align-items: baseline; justify-content: space-between; margin: 26px 0 8px; }
+.list-head h2 { font-family: var(--font-display); font-size: 1.0625rem; margin: 0; }
+.list-head span { font-size: 0.8125rem; color: var(--muted); }
+.cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cards li { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.cards .head { display: flex; align-items: baseline; gap: 8px; }
+.cards .e { font-weight: 600; overflow-wrap: anywhere; }
+.cards .src { font-size: 0.6875rem; color: var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 0 6px; line-height: 18px; flex: none; }
+.cards .when { margin-left: auto; font-size: 0.75rem; color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+.cards .when.now { color: var(--again); font-weight: 600; }
+.cards .f { font-size: 0.875rem; color: var(--muted); margin: 2px 0 0; }
+.cards details { margin-top: 6px; font-size: 0.875rem; }
+.cards summary { cursor: pointer; color: var(--muted); font-size: 0.8125rem; }
+.cards details p { margin: 6px 0 0; }
+.cards details ul { margin: 6px 0 0; padding-left: 18px; }
+@media (prefers-reduced-motion: no-preference) {
+  .msg, .rcard { animation: rise 0.18s ease-out; }
+  @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>원리 영어 노트</h1>
+      <p id="status">카드 불러오는 중</p>
+    </div>
+    <nav class="tabs" aria-label="학습 단계">
+      <a class="tab" href="#why" data-tab="why"><span class="n">1</span><span class="t">궁금한 영어</span><span class="d">왜 이런 뜻일까</span></a>
+      <a class="tab" href="#how" data-tab="how"><span class="n">2</span><span class="t">네이티브 번역</span><span class="d">내 말을 영어로</span></a>
+      <a class="tab" href="#review" data-tab="review"><span class="n">3</span><span class="t">공부</span><span class="d">저장한 카드</span><span class="due" id="due-badge" hidden>0</span></a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="view" id="view-why" aria-labelledby="why-title">
+    <p class="lead" id="why-title"><strong>궁금한 영어 표현을 넣어보세요.</strong> 뜻만 나열하지 않고, 왜 그런 뜻이 되는지 핵심 느낌과 어원으로 풀어줘요.</p>
+    <div class="thread" id="why-thread" aria-live="polite"></div>
+    <div class="next" id="why-next"></div>
+    <div id="why-save"></div>
+    <div class="compose">
+      <label class="note" for="why-input">표현 또는 이어서 묻고 싶은 것</label>
+      <textarea id="why-input" rows="2" placeholder="예: make up"></textarea>
+      <div class="row between">
+        <button class="ghost" id="why-reset" type="button">새 표현으로 시작</button>
+        <div class="row">
+          <button id="why-stop" type="button" hidden>멈추기</button>
+          <button class="primary" id="why-send" type="button">원리 보기</button>
+        </div>
+      </div>
+    </div>
+    <div class="chips" id="why-chips"><span>눌러서 넣기</span>
+      <button class="chip" type="button">make up</button>
+      <button class="chip" type="button">get over</button>
+      <button class="chip" type="button">run out of</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-how" aria-labelledby="how-title">
+    <p class="lead" id="how-title"><strong>한국어를 넣으면 원어민 영어로, 영어를 넣으면 속뜻까지 담은 한국어로 바꿔줘요.</strong> 다시 쓸 수 있는 패턴도 하나 뽑아줘요.</p>
+    <div class="thread" id="how-thread" aria-live="polite"></div>
+    <div class="next" id="how-next"></div>
+    <div id="how-save"></div>
+    <div class="compose">
+      <label class="note" for="how-input">하고 싶은 말이나 읽은 영어 (누구에게, 어떤 상황인지 같이 쓰면 더 정확해요)</label>
+      <textarea id="how-input" rows="3" placeholder="예: 집주인에게, 이번 달 월세를 이틀만 늦게 내도 되는지 정중하게"></textarea>
+      <div class="row between">
+        <button class="ghost" id="how-reset" type="button">새 문장으로 시작</button>
+        <div class="row">
+          <button id="how-stop" type="button" hidden>멈추기</button>
+          <button class="primary" id="how-send" type="button">영어로 바꾸기</button>
+        </div>
+      </div>
+    </div>
+    <div class="chips" id="how-chips"><span>눌러서 넣기</span>
+      <button class="chip" type="button">제가 잘못 이해한 것 같아요</button>
+      <button class="chip" type="button">혹시 내일로 미뤄도 될까요?</button>
+      <button class="chip" type="button">덕분에 잘 해결됐어요</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-review" aria-labelledby="review-title">
+    <p class="lead" id="review-title"><strong>1 궁금한 영어, 2 네이티브 번역에서 저장한 카드로 공부해요.</strong> 기억나면 다음 복습까지 1, 3, 7, 14, 30일로 늘어나고, 다시 볼래요를 누르면 내일 또 나와요.</p>
+    <div id="review-stage"></div>
+    <div class="list-head"><h2>쌓인 카드</h2><span id="list-count"></span></div>
+    <ul class="cards" id="card-list"></ul>
+  </section>
+</main>
+
+<script src="config.local.js" onerror="void 0"></script>
+<script src="local-bridge.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DAY = 86400000;
+  var INTERVALS = [1, 3, 7, 14, 30];
+
+  // 부르는 이름: config.local.js 에 적어두면 그 이름으로, 없으면 "사용자"
+  var NAME = (window.ENGLY_CONFIG && window.ENGLY_CONFIG.name) || "";
+  var WHO = NAME || "사용자";
+
+  var FORMAT_RULES = [
+    "[형식]",
+    "- 휴대폰 화면에서 읽는다. 첫 답변은 한국어 기준 400자~700자 안쪽으로 쓴다.",
+    "- 소제목은 '## ' 로, 목록은 '- ' 로, 강조는 **굵게** 로만 쓴다. 표와 코드블록은 쓰지 않는다.",
+    NAME ? "- 사용자를 부를 때는 " + NAME + " 라고 쓴다. 다른 글자로 바꿔 쓰지 않는다." : "- 사용자를 따로 부르지 않는다.",
+    "- 이어지는 질문에는 설명 순서를 처음부터 반복하지 말고, 물은 것만 짧게 답한다."
+  ].join("\n");
+
+  var PROMPTS = {
+    why: [
+      "너는 " + WHO + "의 영어 코치다. " + WHO + "가 영어를 '외우지 말고 원리로' 익히게 설명한다. 한국어로 답한다.",
+      "",
+      "[설명 순서 - 반드시 이 순서로]",
+      "1. \"대부분 이 표현을 ~로 외우는데, 사실 원리는 ~예요\" 로 시작한다. 또는 \"~는 왜 ~일까요?\" 같은 호기심 질문으로 시작한다.",
+      "2. 핵심 느낌을 설명한다. 예: off는 '떨어지는 느낌'.",
+      "3. 원리를 설명한다. 어원이 있으면 어원, 없으면 음성상징이나 의미 확장으로 설명한다.",
+      "   - 너는 지금 사전을 검색할 수 없다. 그래서 원리 항목마다 맨 앞에 [확실], [가설], [확인 필요] 중 하나를 붙인다.",
+      "   - 주요 어원 사전(etymonline, Cambridge 등)에 그대로 실린 내용이라고 확신할 때만 [확실]을 쓴다.",
+      "   - 네가 풀이한 의미 확장은 [가설]이다.",
+      "   - 조금이라도 불확실하면 [확인 필요]를 먼저 말하고, etymonline에서 확인해보라고 한 줄로 덧붙인다.",
+      "4. 한 표현이 여러 뜻을 가지면, 각 뜻을 핵심 느낌으로 알아볼 수 있는 짧은 설명을 준다.",
+      "5. Before/After 예문 1쌍을 넣는다.",
+      "   - Before: 한국인이 흔히 쓰는 어색한 표현",
+      "   - After: 원어민이 실제로 쓰는 표현 + 한국어 뜻",
+      "   - Before가 문법적으로 틀린 것인지, 그냥 덜 자연스러운 것인지 구분한다.",
+      "   - Before가 원어민에게 다르게 들려 오해가 생길 수 있으면 어떻게 들리는지 알려준다.",
+      "",
+      "[톤]",
+      "- 나쁜 예: \"off는 분리나 이탈을 나타내는 전치사로 다양한 표현에서 활용됩니다\"",
+      "- 좋은 예: \"off는 '떨어지는 느낌'입니다. 이 느낌과 방향을 알면 모르는 영어에도 파악해볼 수 있어요.\"",
+      "- 나쁜 예: \"make up은 여러 의미를 가진 다의어 구동사입니다\"",
+      "- 좋은 예: \"make up, 뜻이 네 개예요. 근데 다 '채워서 만든다'는 의미를 지니고 있죠.\"",
+      "- 경향을 말할 때: \"gl- 단어엔 주로 빛 느낌이 많아요.\"",
+      "",
+      "[금지]",
+      "- 어원이나 뜻을 검증 없이 단정하지 않는다. 불확실하면 \"추정입니다\"를 먼저 말한다.",
+      "- \"~라는 특징이 있습니다\" 같은 균일한 설명체를 쓰지 않는다.",
+      "- 경향을 법칙처럼 말하지 않는다. 예외를 콕 집어 나열하지 말고, 단정하는 어미를 피한다.",
+      "- 뜻만 나열하고 끝내지 않는다. 이유와 설명으로 이해를 돕는다.",
+      "",
+      FORMAT_RULES,
+      "",
+      "[마지막 줄] 첫 답변의 맨 끝에만, 아래 형식으로 정확히 한 줄을 덧붙인다. 다른 말은 붙이지 않는다.",
+      "<<CARD|표현|핵심 느낌 한 줄|After 예문>>"
+    ].join("\n"),
+
+    how: [
+      "너는 한국어 화자의 의도를 이해하고 자연스러운 영어 표현으로 바꿔주는 영어 코치다. 설명은 한국어로 한다.",
+      "단순 번역이 목적이 아니다. 사용자가 전달하려는 감정, 의도, 상황, 상대방과의 관계를 파악하고 실제 영어권 화자가 쓸 법한 자연스러운 표현을 제안한다.",
+      "",
+      "[기본 원칙]",
+      "- 한국어 문장을 그대로 직역하지 않는다. 핵심 의도와 감정을 먼저 파악한다.",
+      "- 문법적으로 맞는 표현보다 실제 대화에서 자연스럽게 쓰이는 표현을 우선한다.",
+      "- 상황에 맞는 정중함, 친근함, 거리감을 고려한다.",
+      "- 사용자가 요청한 지역이 있으면 그 지역 표현을 우선하고, 없으면 북미 영어를 기본으로 한다.",
+      "- 과도하게 격식 있거나 교과서적인 표현은 피한다.",
+      "- 원어민 표현이라고 단정하지 말고, 지역과 개인에 따른 차이를 고려한다.",
+      "",
+      "[입력 방향 - 먼저 판단]",
+      "- 입력이 주로 한국어면: 아래 [답변 순서]대로 자연스러운 영어로 바꾼다.",
+      "- 입력이 주로 영어면: [영어 → 한국어 순서]대로 자연스러운 한국어로 옮긴다. 한국 사람이 이해하기 쉬운 말로 뭉개지 말고, 영어 화자가 전하려는 느낌, 태도, 숨은 의도까지 한국어에 담는다.",
+      "",
+      "[영어 → 한국어 순서]",
+      "## 자연스러운 번역 : 원문 전체를 빠짐없이 옮긴다. 원문 구조(제목, 목록)는 살린다. 번역투를 피하고, 원문의 말투(들뜬 광고 톤, 딱딱한 공지 톤 등)도 한국어로 살린다. 잘리거나 빠진 부분이 보이면 그렇다고 표시한다.",
+      "## 속뜻 : 겉뜻과 영어권 사람이 읽을 때의 속뜻이 다른 표현만 골라 '- **원문 표현** : 겉뜻 → 속뜻' 형식으로 쓴다. 업계 관용 문구, 완곡어법, 굵게 강조된 단서를 놓치지 않는다.",
+      "## 확실한 것과 추정 : 원문에 그대로 쓰여 있어서 확실한 것과, 원문에 없지만 추정한 것을 나눈다. 추정을 확인하려면 영어로 뭐라고 물어보면 되는지 한 문장씩 준다.",
+      "## Reusable Pattern : 원문에서 " + WHO + "가 직접 써먹을 만한 영어 표현이나 패턴 하나.",
+      "- 영어 → 한국어일 때는 첫 답변 길이 제한을 따르지 않는다. 원문 길이에 맞춘다.",
+      "",
+      "[답변 순서 - 한국어 → 영어]",
+      "## Natural Expression : 가장 자연스러운 영어 문장을 먼저. 문자, 이메일, 대화에 바로 쓸 수 있는 완성형으로.",
+      "## Why This Sounds Natural : 직역하면 어색해지는 부분, 어순과 구조의 차이, 정중함의 정도.",
+      "## Expression Breakdown : 다시 쓸 가치가 있는 표현만. 구동사, 관용 표현, 전치사와 particle의 느낌, 미묘한 뉘앙스. 모든 단어를 설명하지 않는다.",
+      "## Alternative Expressions : 같은 의도의 다른 표현 최대 2개. 정중함, 친근함, 직접성의 차이를 한 줄씩.",
+      "## Reusable Pattern : 다른 상황에도 쓸 수 있는 문장 패턴 하나. 예: Would it be okay if I + 과거형?",
+      "## Before / After : 한국어 화자가 직역하기 쉬운 표현과 자연스러운 표현을 비교. 문법적으로 틀린 것과 덜 자연스러운 것을 구분한다.",
+      "",
+      "[설명 원칙]",
+      "- 길게 설명하지 않는다. 사용자가 실제로 다시 쓸 수 있는 표현에 집중한다.",
+      "- 어원은 의미 이해에 도움이 될 때만 쓴다. 불확실한 어원이나 사용 경향은 추정이라고 표시한다.",
+      "- 슬랭이나 관용 표현은 실제 사용 맥락과 사회적 뉘앙스를 함께 설명한다.",
+      "",
+      "[학습 효율]",
+      "- P1: 지금 문장을 이해하고 쓰는 데 필요한 내용만 설명한다.",
+      "- P2: 알아두면 유용한 표현은 짧게.",
+      "- P3: 지금 목표와 직접 관련 없는 내용은 꺼내지 않는다.",
+      "- 누구에게 하는 말인지 알 수 없어 답이 크게 달라질 때만, 가장 흔한 상황을 가정하고 그 가정을 한 줄로 밝힌다.",
+      "",
+      FORMAT_RULES,
+      "",
+      "[마지막 줄] 첫 답변의 맨 끝에만, 아래 형식으로 정확히 한 줄을 덧붙인다. 다른 말은 붙이지 않는다.",
+      "<<CARD|Reusable Pattern|이 패턴의 느낌이나 쓰임 한 줄|예문 한 문장>>"
+    ].join("\n")
+  };
+
+  var CFG = {
+    why: { source: "궁금한 영어", sendLabel: "원리 보기", followLabel: "이어서 묻기" },
+    how: { source: "네이티브 번역", sendLabel: "영어로 바꾸기", followLabel: "이어서 묻기" }
+  };
+
+  var state = {
+    cards: new Map(),
+    storeMode: "loading",
+    staleNote: false,
+    db: null,
+    col: null,
+    sample: null,
+    sampleReady: false,
+    sessions: {
+      why: { msgs: [], busy: false, ctrl: null, card: null, saved: false, formOpen: false },
+      how: { msgs: [], busy: false, ctrl: null, card: null, saved: false, formOpen: false }
+    },
+    review: { queue: [], i: 0, phase: "idle", check: null, checking: false, draft: "", done: 0 }
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function inline(s) {
+    return esc(s)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[(확실|가설|확인 필요|추정)\]/g, function (m, t) {
+        return '<span class="tag ' + (t === "확실" ? "sure" : "maybe") + '">' + t + "</span>";
+      });
+  }
+  function md(src) {
+    var out = [], para = [], list = false;
+    function flushP() { if (para.length) { out.push("<p>" + para.join("<br>") + "</p>"); para = []; } }
+    function closeL() { if (list) { out.push("</ul>"); list = false; } }
+    src.split("\n").forEach(function (raw) {
+      var line = raw.trim(), m;
+      if (!line) { flushP(); closeL(); return; }
+      if ((m = line.match(/^#{1,4}\s+(.*)/))) { flushP(); closeL(); out.push("<h3>" + inline(m[1]) + "</h3>"); return; }
+      if ((m = line.match(/^[-*•]\s+(.*)/))) {
+        flushP();
+        if (!list) { out.push("<ul>"); list = true; }
+        out.push("<li>" + inline(m[1]) + "</li>");
+        return;
+      }
+      closeL();
+      para.push(inline(line));
+    });
+    flushP(); closeL();
+    return out.join("");
+  }
+  function stripCard(text) {
+    var i = text.lastIndexOf("<<CARD");
+    var t = i >= 0 ? text.slice(0, i) : text.replace(/<{1,2}[A-Z]{0,4}$/, "");
+    return t.trim();
+  }
+  function parseCard(text) {
+    var m = text.match(/<<CARD\|([^|>]*)\|([^|>]*)(?:\|([^>]*))?>>/);
+    if (!m) return null;
+    return { expression: m[1].trim(), feel: m[2].trim(), sentence: (m[3] || "").trim() };
+  }
+  function startOfToday() { var d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+  function isDue(c) { return (c.nextDue || 0) <= Date.now(); }
+  function dueLabel(c) {
+    var n = Math.round(((c.nextDue || 0) - startOfToday()) / DAY);
+    if (n <= 0) return "오늘";
+    if (n === 1) return "내일";
+    return n + "일 뒤";
+  }
+  function sortedCards() {
+    return Array.from(state.cards.values()).sort(function (a, b) { return (a.nextDue || 0) - (b.nextDue || 0); });
+  }
+  function dueCards() { return sortedCards().filter(isDue); }
+
+  /* ---------- store ---------- */
+  function useCap(name) {
+    try {
+      if (window.claude && typeof window.claude.use === "function") {
+        return window.claude.use(name).catch(function () { return null; });
+      }
+    } catch (e) {}
+    return Promise.resolve(null);
+  }
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem("principle-english-cards");
+      var arr = raw ? JSON.parse(raw) : [];
+      state.cards = new Map(arr.map(function (c) { return [c.id, c]; }));
+    } catch (e) { state.cards = new Map(); }
+  }
+  function saveLocal() {
+    try { localStorage.setItem("principle-english-cards", JSON.stringify(Array.from(state.cards.values()))); } catch (e) {}
+  }
+  function initStore() {
+    useCap("db").then(function (db) {
+      if (!db) {
+        state.storeMode = "local";
+        loadLocal();
+        onCards();
+        return;
+      }
+      state.db = db;
+      state.col = db.collection("cards");
+      var timer = setTimeout(function () { state.staleNote = true; renderStatus(); }, 10000);
+      state.col.onSnapshot(function (snap) {
+        var map = new Map();
+        snap.docs.forEach(function (d) {
+          var data = d.data() || {};
+          map.set(d.id, Object.assign({}, data, { id: d.id }));
+        });
+        state.cards = map;
+        if (!snap.metadata || !snap.metadata.fromCache) {
+          clearTimeout(timer);
+          state.staleNote = false;
+        }
+        state.storeMode = "db";
+        onCards();
+      }, function () {
+        clearTimeout(timer);
+        state.storeMode = "error";
+        onCards();
+      });
+    });
+  }
+  function cleanCard(c) {
+    var o = {};
+    Object.keys(c).forEach(function (k) { if (k !== "id") o[k] = c[k]; });
+    return o;
+  }
+  function createCard(data) {
+    if (state.col) return state.col.add(data);
+    var id = "c" + Date.now();
+    state.cards.set(id, Object.assign({ id: id }, data));
+    saveLocal(); onCards();
+    return Promise.resolve();
+  }
+  function patchCard(id, patch) {
+    var cur = state.cards.get(id);
+    if (!cur) return Promise.resolve();
+    if (state.col) return state.col.doc(id).set(cleanCard(Object.assign({}, cur, patch)));
+    state.cards.set(id, Object.assign({}, cur, patch));
+    saveLocal(); onCards();
+    return Promise.resolve();
+  }
+  function removeCard(id) {
+    if (state.col) return state.col.doc(id).delete();
+    state.cards.delete(id);
+    saveLocal(); onCards();
+    return Promise.resolve();
+  }
+
+  /* ---------- status + tabs ---------- */
+  function renderStatus() {
+    var el = $("status"), n = state.cards.size, due = dueCards().length;
+    var badge = $("due-badge");
+    if (due > 0) { badge.hidden = false; badge.textContent = due; } else { badge.hidden = true; }
+    if (state.storeMode === "loading") {
+      el.textContent = state.staleNote ? "저장소에 아직 닿지 못했어요" : "카드 불러오는 중";
+      return;
+    }
+    var base = "카드 " + n + "개 · 오늘 복습 " + due + "개";
+    if (state.storeMode === "local") base += " · 이 브라우저에만 저장";
+    if (state.storeMode === "error") base = "카드 저장소에 연결하지 못했어요";
+    if (state.staleNote && state.storeMode === "db") base += " · 최신이 아닐 수 있어요";
+    el.textContent = base;
+  }
+  function currentTab() {
+    var h = (location.hash || "").replace("#", "");
+    return h === "how" || h === "review" ? h : "why";
+  }
+  function showTab() {
+    var tab = currentTab();
+    ["why", "how", "review"].forEach(function (k) {
+      $("view-" + k).classList.toggle("on", k === tab);
+    });
+    document.querySelectorAll(".tab").forEach(function (a) {
+      if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    if (tab === "review" && state.review.phase === "idle") renderReview();
+  }
+  function goTab(tab) { if (currentTab() === tab) showTab(); else location.hash = tab; }
+
+  /* ---------- sessions (왜 / 어떻게) ---------- */
+  function learnedContext() {
+    var list = Array.from(state.cards.values())
+      .sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); })
+      .slice(0, 15)
+      .map(function (c) { return "- " + c.expression + " : " + c.feel; });
+    if (!list.length) return "";
+    return "\n\n[" + WHO + "가 이미 카드로 저장한 표현]\n" + list.join("\n") +
+      "\n지금 설명이 위 표현과 같은 느낌으로 실제로 이어질 때만 한 줄로 연결해준다. 이어지지 않으면 언급하지 않는다.";
+  }
+  function addMsg(key, cls, html) {
+    var div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.innerHTML = html;
+    $(key + "-thread").appendChild(div);
+    return div;
+  }
+  function setBusy(key, busy) {
+    var s = state.sessions[key];
+    s.busy = busy;
+    $(key + "-send").disabled = busy || !state.sample;
+    $(key + "-stop").hidden = !busy;
+    $(key + "-send").textContent = s.msgs.length ? CFG[key].followLabel : CFG[key].sendLabel;
+  }
+  function errText(e) {
+    var code = e && e.code;
+    if (code === "not_granted") return "이 화면에서는 Claude에게 물어볼 수 없어요. 권한을 허용한 뒤 다시 눌러주세요.";
+    if (code === "rate_limited") return "요청이 잠깐 몰렸어요. 조금 뒤에 다시 눌러주세요.";
+    return "답을 받아오지 못했어요. 다시 한 번 눌러주세요.";
+  }
+  function ask(key) {
+    var s = state.sessions[key], input = $(key + "-input");
+    var text = input.value.trim();
+    if (s.busy || !text) return;
+    if (!state.sample) return;
+    var first = s.msgs.length === 0;
+    var content = first ? PROMPTS[key] + learnedContext() + "\n\n---\n" + WHO + "의 입력:\n" + text : text;
+    s.msgs.push({ role: "user", content: content });
+    addMsg(key, "user", esc(text));
+    var bubble = addMsg(key, "bot", '<span class="thinking">생각하는 중</span>');
+    input.value = "";
+    s.ctrl = new AbortController();
+    setBusy(key, true);
+    var latest = "", scheduled = false;
+    function paint() {
+      scheduled = false;
+      var shown = stripCard(latest);
+      if (shown) bubble.innerHTML = md(shown);
+    }
+    function finish(full, partial) {
+      var shown = stripCard(full);
+      if (shown) {
+        bubble.innerHTML = md(shown);
+        s.msgs.push({ role: "assistant", content: full });
+        if (first && !partial) {
+          s.card = parseCard(full) || { expression: key === "why" ? text : "", feel: "", sentence: "" };
+          s.saved = false;
+          renderNext(key);
+        }
+      } else {
+        bubble.remove();
+        s.msgs.pop();
+      }
+    }
+    state.sample(s.msgs, {
+      cache: false,
+      signal: s.ctrl.signal,
+      onText: function (ev) {
+        latest = ev.text || "";
+        if (!scheduled) { scheduled = true; requestAnimationFrame(paint); }
+      }
+    }).then(function (res) {
+      finish((res && res.text) || latest, false);
+    }).catch(function (e) {
+      var partial = (e && e.text) || latest;
+      var aborted = s.ctrl && s.ctrl.signal.aborted;
+      if (partial && stripCard(partial)) {
+        finish(partial, true);
+      } else {
+        bubble.remove();
+        s.msgs.pop();
+        input.value = text;
+      }
+      if (!aborted) addMsg(key, "err", esc(errText(e)));
+    }).then(function () {
+      s.ctrl = null;
+      setBusy(key, false);
+    });
+  }
+  function resetSession(key) {
+    var s = state.sessions[key];
+    if (s.ctrl) s.ctrl.abort();
+    s.msgs = []; s.card = null; s.saved = false; s.formOpen = false;
+    $(key + "-thread").innerHTML = "";
+    $(key + "-next").innerHTML = "";
+    $(key + "-save").innerHTML = "";
+    $(key + "-chips").hidden = false;
+    setBusy(key, false);
+  }
+  function renderNext(key) {
+    var s = state.sessions[key], box = $(key + "-next");
+    box.innerHTML = "";
+    $(key + "-chips").hidden = true;
+    if (!s.card) return;
+    var save = document.createElement("button");
+    save.type = "button";
+    save.className = "primary";
+    save.textContent = s.saved ? "카드로 저장했어요" : "카드로 저장";
+    save.disabled = s.saved;
+    save.addEventListener("click", function () { s.formOpen = true; renderSaveForm(key); });
+    box.appendChild(save);
+
+    var hop = document.createElement("button");
+    hop.type = "button";
+    if (key === "why") {
+      hop.textContent = "이 표현으로 말해보기 → 2 네이티브 번역";
+      hop.addEventListener("click", function () {
+        var expr = s.card.expression || "";
+        if (state.sessions.how.msgs.length) resetSession("how");
+        $("how-input").value = "'" + expr + "'를 써서 말하고 싶어요. 상황: ";
+        goTab("how");
+        $("how-input").focus();
+      });
+    } else {
+      hop.textContent = "왜 이런 표현인지 보기 → 1 궁금한 영어";
+      hop.addEventListener("click", function () {
+        if (state.sessions.why.msgs.length) resetSession("why");
+        $("why-input").value = s.card.expression || "";
+        goTab("why");
+        $("why-input").focus();
+      });
+    }
+    box.appendChild(hop);
+  }
+  function renderSaveForm(key) {
+    var s = state.sessions[key], box = $(key + "-save");
+    if (!s.formOpen || !s.card) { box.innerHTML = ""; return; }
+    box.innerHTML =
+      '<div class="panel">' +
+      "<h2>복습 카드 만들기</h2>" +
+      '<div class="field"><label for="' + key + '-f-expr">표현</label><input type="text" id="' + key + '-f-expr"></div>' +
+      '<div class="field"><label for="' + key + '-f-feel">핵심 느낌</label><textarea id="' + key + '-f-feel" rows="2"></textarea></div>' +
+      '<div class="field"><label for="' + key + '-f-sent">문장 (내가 만든 문장으로 바꿔 적으면 더 잘 떠올라요)</label><textarea id="' + key + '-f-sent" rows="2"></textarea></div>' +
+      '<div class="field"><label for="' + key + '-f-miss">틀렸던 지점 (없으면 비워두기)</label><textarea id="' + key + '-f-miss" rows="2" placeholder="예: get down이라고 말할 뻔했음"></textarea></div>' +
+      '<p class="note" id="' + key + '-f-note"></p>' +
+      '<div class="row end"><button type="button" class="ghost" id="' + key + '-f-cancel">닫기</button>' +
+      '<button type="button" class="primary" id="' + key + '-f-ok">저장하고 내일 복습에 넣기</button></div>' +
+      "</div>";
+    $(key + "-f-expr").value = s.card.expression || "";
+    $(key + "-f-feel").value = s.card.feel || "";
+    $(key + "-f-sent").value = s.card.sentence || "";
+    $(key + "-f-cancel").addEventListener("click", function () { s.formOpen = false; renderSaveForm(key); });
+    $(key + "-f-ok").addEventListener("click", function () {
+      var expr = $(key + "-f-expr").value.trim();
+      var feel = $(key + "-f-feel").value.trim();
+      if (!expr || !feel) { $(key + "-f-note").textContent = "표현과 핵심 느낌은 채워주세요."; return; }
+      var miss = $(key + "-f-miss").value.trim();
+      var btn = $(key + "-f-ok");
+      btn.disabled = true;
+      createCard({
+        expression: expr,
+        feel: feel,
+        sentence: $(key + "-f-sent").value.trim(),
+        mistakes: miss ? [miss] : [],
+        source: CFG[key].source,
+        createdAt: Date.now(),
+        box: 0,
+        nextDue: startOfToday() + DAY,
+        lastReviewed: null,
+        reviews: 0
+      }).then(function () {
+        s.saved = true; s.formOpen = false;
+        renderSaveForm(key); renderNext(key);
+      }).catch(function () {
+        btn.disabled = false;
+        $(key + "-f-note").textContent = "저장하지 못했어요. 다시 눌러주세요.";
+      });
+    });
+  }
+  function wireSession(key) {
+    $(key + "-send").addEventListener("click", function () { ask(key); });
+    $(key + "-stop").addEventListener("click", function () {
+      var s = state.sessions[key];
+      if (s.ctrl) s.ctrl.abort();
+    });
+    $(key + "-reset").addEventListener("click", function () { resetSession(key); $(key + "-input").focus(); });
+    $(key + "-chips").addEventListener("click", function (e) {
+      if (e.target.classList.contains("chip")) {
+        $(key + "-input").value = e.target.textContent;
+        $(key + "-input").focus();
+      }
+    });
+  }
+
+  /* ---------- review ---------- */
+  function startReview(early) {
+    var list = early ? sortedCards() : dueCards();
+    state.review = { queue: list.map(function (c) { return c.id; }), i: 0, phase: list.length ? "front" : "idle", check: null, checking: false, draft: "", done: 0 };
+    renderReview();
+  }
+  function currentCard() {
+    var r = state.review;
+    while (r.i < r.queue.length && !state.cards.get(r.queue[r.i])) r.i++;
+    return r.i < r.queue.length ? state.cards.get(r.queue[r.i]) : null;
+  }
+  function renderReview() {
+    var stage = $("review-stage"), r = state.review;
+    if (r.phase === "idle" || r.phase === "finished") {
+      var total = state.cards.size, due = dueCards().length;
+      var html = '<div class="rcard empty">';
+      if (r.phase === "finished") {
+        html += "<h2>이번 복습 끝</h2><p class=\"note\">" + r.done + "개를 봤어요. 다음 날짜는 아래 목록에 있어요.</p>";
+      } else if (state.storeMode === "loading") {
+        html += "<h2>카드 불러오는 중</h2>";
+      } else if (!total) {
+        html += "<h2>아직 카드가 없어요</h2><p class=\"note\">1 궁금한 영어나 2 네이티브 번역에서 답을 받은 뒤 카드로 저장을 누르면 여기에 쌓여요.</p>";
+      } else if (due) {
+        html += "<h2>오늘 볼 카드 " + due + "개</h2><p class=\"note\">표현을 보고 느낌을 떠올린 다음, 문장을 하나 직접 써보는 순서예요.</p>";
+      } else {
+        html += "<h2>오늘 볼 카드는 없어요</h2><p class=\"note\">예정일 전이라도 미리 볼 수 있어요.</p>";
+      }
+      html += '<div class="row">';
+      if (due) html += '<button type="button" class="primary" id="rv-start">복습 시작</button>';
+      if (total && !due) html += '<button type="button" id="rv-early">전체 카드 미리 보기</button>';
+      if (!total && state.storeMode !== "loading") html += '<button type="button" id="rv-go">1 궁금한 영어로 가기</button>';
+      html += "</div></div>";
+      stage.innerHTML = html;
+      if ($("rv-start")) $("rv-start").addEventListener("click", function () { startReview(false); });
+      if ($("rv-early")) $("rv-early").addEventListener("click", function () { startReview(true); });
+      if ($("rv-go")) $("rv-go").addEventListener("click", function () { goTab("why"); });
+      return;
+    }
+    var c = currentCard();
+    if (!c) { r.phase = "finished"; renderReview(); return; }
+    var head = '<div class="rcard"><div class="count">' + (r.i + 1) + " / " + r.queue.length + " · " + esc(c.source || "") + "</div>" +
+      '<div class="expr">' + esc(c.expression) + "</div>";
+    if (r.phase === "front") {
+      stage.innerHTML = head +
+        '<div class="field"><label for="rv-draft">핵심 느낌을 떠올리고, 이 표현으로 문장을 하나 써보세요</label>' +
+        '<textarea id="rv-draft" rows="2" placeholder="영어로 한 문장"></textarea></div>' +
+        '<p class="note" id="rv-note"></p>' +
+        '<div class="row end">' +
+        '<button type="button" id="rv-show">답 보기</button>' +
+        (state.sample ? '<button type="button" class="primary" id="rv-check">내 문장 확인받기</button>' : "") +
+        "</div></div>";
+      $("rv-draft").value = r.draft;
+      $("rv-draft").addEventListener("input", function (e) { r.draft = e.target.value; });
+      $("rv-show").addEventListener("click", function () { r.phase = "back"; renderReview(); });
+      if ($("rv-check")) $("rv-check").addEventListener("click", function () { checkSentence(c); });
+      return;
+    }
+    var html2 = head + "<dl>" +
+      "<div><dt>핵심 느낌</dt><dd>" + esc(c.feel || "") + "</dd></div>";
+    if (c.sentence) html2 += "<div><dt>저장한 문장</dt><dd>" + esc(c.sentence) + "</dd></div>";
+    if (c.mistakes && c.mistakes.length) {
+      html2 += "<div><dt>틀렸던 지점</dt><dd>" + c.mistakes.map(esc).join("<br>") + "</dd></div>";
+    }
+    if (r.draft.trim()) html2 += "<div><dt>방금 쓴 문장</dt><dd>" + esc(r.draft.trim()) + "</dd></div>";
+    html2 += "</dl>";
+    if (r.check) {
+      var off = r.check.verdict && r.check.verdict !== "자연스러움";
+      html2 += '<div class="verdict' + (off ? " off" : "") + '"><b>' + esc(r.check.verdict || "확인 결과") + "</b>" +
+        (r.check.better ? esc(r.check.better) + "<br>" : "") +
+        '<span class="note">' + esc(r.check.note || "") + "</span></div>";
+    }
+    html2 += '<div class="row end"><button type="button" class="again" id="rv-again">다시 볼래요</button>' +
+      '<button type="button" class="primary" id="rv-good">기억났어요</button></div></div>';
+    stage.innerHTML = html2;
+    $("rv-again").addEventListener("click", function () { grade(c, false); });
+    $("rv-good").addEventListener("click", function () { grade(c, true); });
+  }
+  function checkSentence(c) {
+    var r = state.review, text = r.draft.trim();
+    if (!text) { $("rv-note").textContent = "문장을 먼저 써주세요. 건너뛰려면 답 보기를 누르면 돼요."; return; }
+    if (r.checking) return;
+    r.checking = true;
+    $("rv-check").disabled = true;
+    $("rv-note").textContent = "확인하는 중";
+    var prompt = [
+      "너는 북미 영어 기준으로 한국어 화자의 영어 문장을 봐주는 코치다.",
+      "복습 중인 표현: " + c.expression,
+      "이 표현의 핵심 느낌: " + c.feel,
+      "학습자가 방금 쓴 문장: " + text,
+      "",
+      "이 문장에서 표현이 핵심 느낌에 맞게, 자연스럽게 쓰였는지 본다. 문법적으로 틀린 것과 덜 자연스러운 것을 구분한다.",
+      "아래 JSON 하나만 출력한다. 다른 글자는 쓰지 않는다.",
+      '{"verdict":"자연스러움 | 조금 어색함 | 뜻이 달라짐 중 하나","better":"더 자연스러운 영어 문장. 이미 자연스러우면 원문 그대로","note":"한국어 한 문장. 어디가 왜 그런지, 원어민에게 어떻게 들리는지"}'
+    ].join("\n");
+    state.sample(prompt, { cache: false, modelTier: "quick" }).then(function (res) {
+      var raw = (res && res.text) || "";
+      var m = raw.match(/\{[\s\S]*\}/);
+      var parsed = null;
+      try { parsed = m ? JSON.parse(m[0]) : null; } catch (e) { parsed = null; }
+      r.check = parsed || { verdict: "확인 결과", better: "", note: raw.slice(0, 300) };
+      r.checking = false;
+      r.phase = "back";
+      renderReview();
+    }).catch(function (e) {
+      r.checking = false;
+      if ($("rv-check")) $("rv-check").disabled = false;
+      if ($("rv-note")) $("rv-note").textContent = errText(e);
+    });
+  }
+  function grade(c, good) {
+    var r = state.review;
+    var box = good ? Math.min((c.box || 0) + 1, INTERVALS.length - 1) : 0;
+    var days = good ? INTERVALS[box] : 1;
+    var patch = { box: box, nextDue: startOfToday() + days * DAY, lastReviewed: Date.now(), reviews: (c.reviews || 0) + 1 };
+    if (!good && r.check && r.check.note && r.check.verdict !== "자연스러움") {
+      var list = (c.mistakes || []).concat([r.check.note]);
+      patch.mistakes = list.slice(-5);
+    }
+    $("rv-again").disabled = true; $("rv-good").disabled = true;
+    patchCard(c.id, patch).catch(function () {}).then(function () {
+      r.done++; r.i++; r.check = null; r.draft = "";
+      r.phase = r.i < r.queue.length ? "front" : "finished";
+      renderReview();
+    });
+  }
+  function renderList() {
+    var ul = $("card-list"), cards = sortedCards();
+    $("list-count").textContent = cards.length ? cards.length + "개 · 복습일 빠른 순" : "";
+    if (!cards.length) {
+      ul.innerHTML = state.storeMode === "loading" ? "" : '<li><p class="note">저장한 카드가 여기에 표현, 핵심 느낌, 다음 복습일과 함께 보여요.</p></li>';
+      return;
+    }
+    ul.innerHTML = cards.map(function (c) {
+      var due = isDue(c);
+      var extra = "";
+      if (c.sentence) extra += "<p>" + esc(c.sentence) + "</p>";
+      if (c.mistakes && c.mistakes.length) extra += "<ul>" + c.mistakes.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul>";
+      return '<li><div class="head"><span class="e">' + esc(c.expression || "") + "</span>" +
+        (c.source ? '<span class="src">' + esc(c.source) + "</span>" : "") +
+        '<span class="when' + (due ? " now" : "") + '">' + dueLabel(c) + "</span></div>" +
+        '<p class="f">' + esc(c.feel || "") + "</p>" +
+        "<details><summary>문장과 기록</summary>" + extra +
+        '<p class="note">복습 ' + (c.reviews || 0) + "회</p>" +
+        '<div class="row end"><button type="button" class="ghost" data-del="' + esc(c.id) + '">카드 지우기</button></div>' +
+        "</details></li>";
+    }).join("");
+  }
+  $("card-list").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-del]");
+    if (!btn) return;
+    if (btn.dataset.armed === "1") {
+      btn.disabled = true;
+      removeCard(btn.dataset.del).catch(function () { btn.disabled = false; });
+      return;
+    }
+    btn.dataset.armed = "1";
+    btn.textContent = "한 번 더 누르면 지워져요";
+    btn.classList.add("again");
+    setTimeout(function () {
+      if (btn.isConnected) { btn.dataset.armed = ""; btn.textContent = "카드 지우기"; btn.classList.remove("again"); }
+    }, 4000);
+  });
+
+  function onCards() {
+    renderStatus();
+    renderList();
+    if (state.review.phase === "idle" || state.review.phase === "finished") {
+      if (state.review.phase === "idle") renderReview();
+    }
+  }
+
+  /* ---------- boot ---------- */
+  wireSession("why");
+  wireSession("how");
+  setBusy("why", false);
+  setBusy("how", false);
+  window.addEventListener("hashchange", showTab);
+  showTab();
+  renderStatus();
+  renderList();
+  renderReview();
+  initStore();
+  useCap("sample").then(function (sample) {
+    state.sample = sample;
+    state.sampleReady = true;
+    setBusy("why", state.sessions.why.busy);
+    setBusy("how", state.sessions.how.busy);
+    if (!sample) {
+      ["why", "how"].forEach(function (key) {
+        addMsg(key, "err", "이 화면에서는 Claude에게 물어보는 기능을 쓸 수 없어요. 3 공부 탭의 카드 보기는 그대로 돼요.");
+      });
+    }
+    if (state.review.phase === "front") renderReview();
+  });
+})();
+</script>
+</body>
+</html>
